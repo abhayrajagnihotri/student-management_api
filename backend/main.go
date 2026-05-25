@@ -10,15 +10,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
-
 type Response struct {
 	Message string `json:"message"`
 	Status  string `json:"status"`
 }
 
 type SignupRequest struct {
-	Name string `json: "name"`
-	Email string `json: "email"`
+	Name     string `json: "name"`
+	Email    string `json: "email"`
 	Password string `json: "password"`
 }
 
@@ -28,7 +27,7 @@ type SignupResponse struct {
 }
 
 type loginRequest struct {
-	Email string `json: "email"`
+	Email    string `json: "email"`
 	Password string `json : "password"`
 }
 
@@ -38,9 +37,9 @@ type loginResponse struct {
 }
 
 type User struct {
-	ID int `json:"id"`
-	Name string `json:"name"`
-	Email string `json:"email"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -54,17 +53,17 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(response)
 }
+
 var users []SignupRequest
 
-
-func signupHandler(w http.ResponseWriter, r *http.Request){
+func signupHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method != http.MethodPost{
+	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(SignupResponse{
-			Message : "Only Post Mathod is allowed",
-			Status : "error",
+			Message: "Only Post Mathod is allowed",
+			Status:  "error",
 		})
 		return
 	}
@@ -82,7 +81,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request){
 	user.Email = strings.TrimSpace(user.Email)
 	user.Password = strings.TrimSpace(user.Password)
 
-	if user.Name =="" || user.Email == "" || user.Password == "" {
+	if user.Name == "" || user.Email == "" || user.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(SignupResponse{
 			Message: "All fields are required",
@@ -109,7 +108,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request){
 	})
 
 }
-
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -192,7 +190,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func usersHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -245,11 +242,10 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
-
-
 var db *sql.DB
+
 func connectDB() {
-	connStr := "host=localhost port=5432 user=abhay password=xyz dbname=student_api sslmode=disable"
+	connStr := "host=postgres port=5432 user=postgres password=postgres dbname=student_api sslmode=disable"
 
 	var err error
 	db, err = sql.Open("postgres", connStr)
@@ -383,8 +379,6 @@ func userByIDHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-
 func enableCORS(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
@@ -412,8 +406,6 @@ func main() {
 	http.HandleFunc("/api/users", enableCORS(usersHandler))
 
 	http.HandleFunc("/api/users/", enableCORS(userByIDHandler))
-
-	
 
 	log.Println("Server running on port 8080")
 	http.ListenAndServe(":8080", nil)
