@@ -406,8 +406,9 @@ func main() {
 	http.HandleFunc("/api/health", enableCORS(healthHandler))
 	http.HandleFunc("/api/signup", enableCORS(signupHandler))
 	http.HandleFunc("/api/login", enableCORS(loginHandler))
+	http.HandleFunc("/api/create-user", enableCORS(signupHandler))
 
-	// GET all users
+	// GET all users (Put, Delete handled in userByIDHandler)
 	http.HandleFunc("/api/users", enableCORS(usersHandler))
 
 	http.HandleFunc("/api/users/", enableCORS(userByIDHandler))
