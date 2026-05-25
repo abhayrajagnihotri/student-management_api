@@ -64,7 +64,7 @@ function UpdateUser() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>User ID </label>
+            <label>User ID</label>
             <input
               type="text"
               placeholder="Enter user ID"
