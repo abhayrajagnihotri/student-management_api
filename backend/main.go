@@ -18,9 +18,9 @@ type Response struct {
 }
 
 type SignupRequest struct {
-	Name     string `json: "name"`
-	Email    string `json: "email"`
-	Password string `json: "password"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type SignupResponse struct {
@@ -29,8 +29,8 @@ type SignupResponse struct {
 }
 
 type loginRequest struct {
-	Email    string `json: "email"`
-	Password string `json : "password"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type loginResponse struct {
@@ -47,16 +47,12 @@ type User struct {
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
 	response := Response{
 		Message: "Backend is running",
 		Status:  "success",
 	}
-
 	json.NewEncoder(w).Encode(response)
 }
-
-var users []SignupRequest
 
 func signupHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -64,7 +60,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(SignupResponse{
-			Message: "Only Post Mathod is allowed",
+			Message: "Only Post Method is allowed",
 			Status:  "error",
 		})
 		return
@@ -108,7 +104,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		Message: "User signup successful",
 		Status:  "success",
 	})
-
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -116,27 +111,21 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-
 		json.NewEncoder(w).Encode(loginResponse{
 			Message: "Only POST method allowed",
 			Status:  "error",
 		})
-
 		return
 	}
 
 	var loginData loginRequest
-
 	err := json.NewDecoder(r.Body).Decode(&loginData)
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-
 		json.NewEncoder(w).Encode(loginResponse{
 			Message: "Invalid request body",
 			Status:  "error",
 		})
-
 		return
 	}
 	loginData.Email = strings.TrimSpace(loginData.Email)
@@ -144,12 +133,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if loginData.Email == "" || loginData.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
-
 		json.NewEncoder(w).Encode(loginResponse{
 			Message: "Email and password required",
 			Status:  "error",
 		})
-
 		return
 	}
 
@@ -166,23 +153,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-
 		json.NewEncoder(w).Encode(loginResponse{
 			Message: "Invalid email or password",
 			Status:  "error",
 		})
-
 		return
 	}
 
 	if dbPassword != loginData.Password {
 		w.WriteHeader(http.StatusUnauthorized)
-
 		json.NewEncoder(w).Encode(loginResponse{
 			Message: "Invalid email or password",
 			Status:  "error",
 		})
-
 		return
 	}
 
@@ -197,50 +180,34 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-
 		json.NewEncoder(w).Encode(Response{
 			Message: "Only GET method allowed",
 			Status:  "error",
 		})
-
 		return
 	}
 
 	query := `SELECT id, name, email FROM users`
-
 	rows, err := db.Query(query)
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-
 		json.NewEncoder(w).Encode(Response{
 			Message: "Database error",
 			Status:  "error",
 		})
-
 		return
 	}
-
 	defer rows.Close()
 
 	var users []User
-
 	for rows.Next() {
 		var user User
-
-		err := rows.Scan(
-			&user.ID,
-			&user.Name,
-			&user.Email,
-		)
-
+		err := rows.Scan(&user.ID, &user.Name, &user.Email)
 		if err != nil {
 			continue
 		}
-
 		users = append(users, user)
 	}
-
 	json.NewEncoder(w).Encode(users)
 }
 
@@ -266,7 +233,6 @@ func connectDB() {
 
 	var err error
 	db, err = sql.Open("postgres", connStr)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -275,108 +241,63 @@ func connectDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	log.Println("PostgreSQL connected successfully")
 }
 
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	// Only PUT method allowed
 	if r.Method != http.MethodPut {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Only PUT method allowed",
-			"status":  "error",
-		})
-
+		json.NewEncoder(w).Encode(map[string]string{"message": "Only PUT method allowed", "status": "error"})
 		return
 	}
 
-	// Get ID from URL
 	id := strings.TrimPrefix(r.URL.Path, "/api/users/")
-	// Request body structure
 	var user User
-
-	// Decode JSON body
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Invalid request body",
-			"status":  "error",
-		})
-
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid request body", "status": "error"})
 		return
 	}
 
-	// SQL UPDATE query
-	query := `
-		UPDATE users
-		SET name=$1, email=$2, password=$3
-		WHERE id=$4
-	`
-
-	// Execute query
+	query := `UPDATE users SET name=$1, email=$2, password=$3 WHERE id=$4`
 	_, err = db.Exec(query, user.Name, user.Email, user.Password, id)
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Failed to update user",
-			"status":  "error",
-		})
-
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update user", "status": "error"})
 		return
 	}
 
-	// Success response
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "User updated successfully",
-		"status":  "success",
-	})
+	json.NewEncoder(w).Encode(map[string]string{"message": "User updated successfully", "status": "success"})
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
 	id := strings.TrimPrefix(r.URL.Path, "/api/users/")
 
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "User id is required",
-		})
+		json.NewEncoder(w).Encode(map[string]string{"message": "User id is required"})
 		return
 	}
 
 	query := `DELETE FROM users WHERE id=$1`
-
 	result, err := db.Exec(query, id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Failed to delete user",
-		})
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete user"})
 		return
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-
 	if rowsAffected == 0 {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "User not found",
-		})
+		json.NewEncoder(w).Encode(map[string]string{"message": "User not found"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "User deleted successfully",
-	})
+	json.NewEncoder(w).Encode(map[string]string{"message": "User deleted successfully"})
 }
 
 func userByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -384,48 +305,50 @@ func userByIDHandler(w http.ResponseWriter, r *http.Request) {
 		updateUser(w, r)
 		return
 	}
-
 	if r.Method == http.MethodDelete {
 		deleteUser(w, r)
 		return
 	}
-
 	w.WriteHeader(http.StatusMethodNotAllowed)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Method not allowed",
-	})
+	json.NewEncoder(w).Encode(map[string]string{"message": "Method not allowed"})
 }
 
-// getAllowedOrigins reads the ALLOWED_ORIGINS env var (comma-separated)
-// and returns a map for fast lookup. Defaults to localhost:5173 if not set.
-func getAllowedOrigins() map[string]bool {
-	originsStr := getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://65.2.167.217:5173")
+// OPTIMIZED: Helper function to get origins map dynamically or fallback safely
+func isOriginAllowed(origin string) bool {
+	originsStr := os.Getenv("ALLOWED_ORIGINS")
+	if originsStr == "" {
+		// Fallback hardcoded values agar env set nahi hai
+		return origin == "http://localhost:5173" || origin == "http://65.2.167.217:5173"
+	}
+
 	origins := strings.Split(originsStr, ",")
-	allowed := make(map[string]bool)
 	for _, o := range origins {
-		trimmed := strings.TrimSpace(o)
-		if trimmed != "" {
-			allowed[trimmed] = true
+		if strings.TrimSpace(o) == origin {
+			return true
 		}
 	}
-	return allowed
+	return false
 }
 
-var allowedOrigins = getAllowedOrigins()
-
+// FIXED: Cleaned Middleware configuration
 func enableCORS(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 
-		// Only allow whitelisted origins
-		if origin != "" && allowedOrigins[origin] {
+		// Agar dynamically allow match karta hai toh use exact pass karein
+		if origin != "" && isOriginAllowed(origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		} else if origin != "" {
+			// Safe fallback: Agar dynamic fallback kaam na kare, toh explicitly deployment URL allow karein
+			w.Header().Set("Access-Control-Allow-Origin", "http://65.2.167.217:5173")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 
+		// CORS preflight rules handle karne ke liye
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -442,12 +365,9 @@ func main() {
 	http.HandleFunc("/api/signup", enableCORS(signupHandler))
 	http.HandleFunc("/api/login", enableCORS(loginHandler))
 	http.HandleFunc("/api/create-user", enableCORS(signupHandler))
-
-	// GET all users (Put, Delete handled in userByIDHandler)
 	http.HandleFunc("/api/users", enableCORS(usersHandler))
-
 	http.HandleFunc("/api/users/", enableCORS(userByIDHandler))
 
 	log.Println("Server running on port 8080")
-	http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
