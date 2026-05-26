@@ -12,7 +12,7 @@ function Signup() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8080/api/signup", {
+      const response = await fetch("http://65.2.167.217:8080/api/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

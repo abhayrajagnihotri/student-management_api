@@ -14,6 +14,7 @@ services:
   backend:
     build: ./backend
     container_name: student_backend
+    restart: always
     depends_on:
       - postgres
     ports:
@@ -24,6 +25,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: student_api
+      
   
   frontend:
     build: ./frontend
@@ -35,3 +37,4 @@ services:
 
 volumes:
   postgres_data:
+

@@ -15,7 +15,7 @@ function UpdateUser() {
     setError("");
 
     try {
-      const response = await fetch(`http://localhost:8080/api/users/${userId}`, {
+      const response = await fetch(`http://65.2.167.217:8080/api/users/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),

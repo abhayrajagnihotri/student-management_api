@@ -14,7 +14,7 @@ function CreateUser() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/api/create-user", {
+      const response = await fetch("http://65.2.167.217:8080/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),

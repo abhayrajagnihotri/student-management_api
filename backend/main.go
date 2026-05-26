@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	_ "github.com/lib/pq"
@@ -244,8 +246,23 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 
 var db *sql.DB
 
+func getEnv(key, fallback string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	return val
+}
+
 func connectDB() {
-	connStr := "host=postgres port=5432 user=postgres password=postgres dbname=student_api sslmode=disable"
+	host := getEnv("DB_HOST", "localhost")
+	port := getEnv("DB_PORT", "5432")
+	user := getEnv("DB_USER", "postgres")
+	password := getEnv("DB_PASSWORD", "postgres")
+	dbname := getEnv("DB_NAME", "student_api")
+
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
 
 	var err error
 	db, err = sql.Open("postgres", connStr)
@@ -379,11 +396,35 @@ func userByIDHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// getAllowedOrigins reads the ALLOWED_ORIGINS env var (comma-separated)
+// and returns a map for fast lookup. Defaults to localhost:5173 if not set.
+func getAllowedOrigins() map[string]bool {
+	originsStr := getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://65.2.167.217:5173")
+	origins := strings.Split(originsStr, ",")
+	allowed := make(map[string]bool)
+	for _, o := range origins {
+		trimmed := strings.TrimSpace(o)
+		if trimmed != "" {
+			allowed[trimmed] = true
+		}
+	}
+	return allowed
+}
+
+var allowedOrigins = getAllowedOrigins()
+
 func enableCORS(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		origin := r.Header.Get("Origin")
+
+		// Only allow whitelisted origins
+		if origin != "" && allowedOrigins[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
